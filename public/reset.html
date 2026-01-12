@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>קביעת סיסמה | Jawdat Parts</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('pic.jpg') no-repeat center center fixed !important; background-size: cover !important; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: rgba(255,255,255,0.95); padding: 40px; border-radius: 20px; text-align: center; width: 380px; backdrop-filter: blur(10px); }
+        input { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; }
+        button { width: 100%; padding: 15px; background: #27ae60; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>קביעת סיסמה חדשה</h2>
+        <input type="text" id="uName" placeholder="שם המשתמש שלך">
+        <input type="password" id="newP" placeholder="סיסמה חדשה">
+        <button onclick="save()">שמור סיסמה</button>
+        <p id="msg"></p>
+        <a href="login.html" style="color:#3498db; text-decoration:none;">חזרה לכניסה</a>
+    </div>
+    <script>
+        async function save() {
+            const res = await fetch('/api/password-reset/finalize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: uName.value, newPassword: newP.value })
+            });
+            const msg = document.getElementById('msg');
+            if (res.ok) { msg.style.color = "green"; msg.innerText = "הסיסמה שונתה! תחזור לדף הכניסה."; }
+            else { msg.style.color = "red"; msg.innerText = "שגיאה: אולי המנהל טרם אישר לך?"; }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>כניסה | Jawdat Parts</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('pic.jpg') no-repeat center center fixed !important;
+            background-size: cover !important; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;
+        }
+        .login-box { 
+            background: rgba(255, 255, 255, 0.95); padding: 40px; border-radius: 20px; text-align: center; width: 100%; max-width: 380px;
+            backdrop-filter: blur(10px); border-top: 5px solid #3498db; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .logo { width: 90px; height: 90px; border-radius: 50%; border: 3px solid #3498db; margin-bottom: 20px; background: white; object-fit: contain; }
+        
+        /* עיצוב לטופס כדי שלא ישבור את המראה */
+        form { display: flex; flex-direction: column; width: 100%; }
+        
+        input { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; outline: none; }
+        button { width: 100%; padding: 15px; background: #3498db; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 18px; }
+        #errorMsg { color: #e74c3c; font-weight: bold; margin-top: 15px; display: none; }
+        
+        .links { margin-top: 20px; font-size: 14px; display: flex; justify-content: space-between; }
+        .links a { color: #3498db; text-decoration: none; cursor: pointer; font-weight: bold; }
+        .links a:hover { text-decoration: underline; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content {
+            background: white; padding: 30px; border-radius: 15px; text-align: center; width: 300px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5); border-top: 5px solid #27ae60;
+        }
+        .close-btn { background: #ccc; color: black; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <img src="logo.jpg" class="logo" onerror="this.src='https://via.placeholder.com/90'">
+        <h2>כניסת צוות</h2>
+        
+        <form onsubmit="event.preventDefault(); login();">
+            <input type="text" id="u" placeholder="שם משתמש" required>
+            <input type="password" id="p" placeholder="סיסמה" required>
+            <button type="submit">התחבר</button>
+        </form>
+
+        <div id="errorMsg"></div>
+        <div class="links">
+            <a onclick="requestReset()">שכחתי סיסמה</a>
+            <a onclick="openResetModal()" style="color: #27ae60;">אושר לי שינוי סיסמה</a>
+        </div>
+    </div>
+
+    <div id="resetModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="color:#27ae60; margin-top:0;">הגדרת סיסמה חדשה</h3>
+            <p style="font-size:13px; color:#555;">הזן את שם המשתמש שלך<br>ואת הסיסמה החדשה שברצונך לקבוע</p>
+            
+            <input type="text" id="resetUser" placeholder="שם משתמש">
+            <input type="text" id="resetNewPass" placeholder="סיסמה חדשה">
+            
+            <button onclick="completeReset()" style="background: #27ae60;">עדכן סיסמה</button>
+            <button onclick="closeModal()" class="close-btn">ביטול</button>
+        </div>
+    </div>
+
+    <script>
+        async function login() {
+            const uVal = document.getElementById('u').value;
+            const pVal = document.getElementById('p').value;
+            const err = document.getElementById('errorMsg');
+            
+            err.style.display = 'none';
+            
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: uVal, password: pVal })
+            });
+            
+            const data = await res.json();
+
+            if (res.ok) {
+                localStorage.setItem('user', JSON.stringify(data));
+                window.location.href = "/admin";
+            } else {
+                err.innerText = "שם משתמש או סיסמה שגויים";
+                err.style.display = 'block';
+            }
+        }
+
+        async function requestReset() {
+            const uVal = document.getElementById('u').value;
+            if(!uVal) return alert("אנא הזן שם משתמש בשדה למעלה");
+            const res = await fetch('/api/password-reset/request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: uVal })
+            });
+            alert(res.ok ? "הבקשה נשלחה למנהל!" : "משתמש לא נמצא");
+        }
+
+        function openResetModal() {
+            document.getElementById('resetModal').style.display = 'flex';
+        }
+        function closeModal() {
+            document.getElementById('resetModal').style.display = 'none';
+        }
+
+        async function completeReset() {
+            const username = document.getElementById('resetUser').value;
+            const newPassword = document.getElementById('resetNewPass').value;
+
+            if(!username || !newPassword) return alert("חובה למלא את כל השדות");
+
+            const res = await fetch('/api/users/complete-reset', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, newPassword })
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                alert("הסיסמה שונתה בהצלחה! כעת ניתן להתחבר.");
+                closeModal();
+            } else {
+                alert("שגיאה: " + (data.message || "אין אישור מנהל או משתמש לא קיים"));
+            }
+        }
+    </script>
+</body>
+</html>

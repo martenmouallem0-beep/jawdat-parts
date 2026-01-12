@@ -1,0 +1,14 @@
+[
+  {
+    "user": "marten",
+    "pass": "0524273202",
+    "role": "super",
+    "phone": "972524273202"
+  },
+  {
+    "user": "jawdat",
+    "pass": "1234",
+    "phone": "972506663027",
+    "role": "admin"
+  }
+]

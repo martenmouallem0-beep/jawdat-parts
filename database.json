@@ -1,0 +1,11 @@
+{
+  "users": [
+    {
+      "username": "marten",
+      "password": "0524273202",
+      "role": "admin"
+    }
+  ],
+  "parts": [],
+  "resetRequests": []
+}

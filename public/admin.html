@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניהול מערכת | Jawdat Parts</title>
+    <link rel="icon" type="image/png" href="logo.jpg">
+    
+    <style>
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background-image: linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), url('pic.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            padding: 20px; 
+            direction: rtl; 
+            margin: 0; 
+            min-height: 100vh;
+        }
+        
+        .admin-header {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255, 255, 255, 0.95); padding: 10px 30px;
+            border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        .header-right { display: flex; align-items: center; gap: 20px; }
+        
+        .admin-logo {
+            height: 70px; 
+            width: 70px;
+            border-radius: 50%;
+            object-fit: contain; 
+            background: #fff;
+            border: 2px solid #3498db;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        h2 { color: #2c3e50; margin: 0; font-size: 24px; }
+        
+        .box { background: rgba(255, 255, 255, 0.98); padding: 25px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+        h3 { margin-top: 0; color: #34495e; border-right: 4px solid #3498db; padding-right: 15px; }
+        
+        .form-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: flex-end; }
+        .input-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 120px; }
+        
+        label { font-size: 13px; color: #666; font-weight: bold; }
+        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; outline: none; transition: 0.3s; }
+        input:focus { border-color: #3498db; box-shadow: 0 0 5px rgba(52,152,219,0.3); }
+        
+        button { padding: 12px 20px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { opacity: 0.9; transform: translateY(-2px); }
+        
+        /* כפתורים */
+        .del-btn { background: #e74c3c; padding: 6px 12px; font-size: 12px; border-radius: 5px; }
+        .edit-btn { background: #f39c12; padding: 6px 12px; font-size: 12px; border-radius: 5px; margin-left: 5px; color: white; border: none; cursor: pointer; }
+        
+        .approve-btn { background: #27ae60; padding: 6px 12px; font-size: 12px; border-radius: 5px; margin-left: 5px; color: white; border: none; cursor: pointer; }
+        .reject-btn { background: #e67e22; padding: 6px 12px; font-size: 12px; border-radius: 5px; color: white; border: none; cursor: pointer; }
+        
+        /* כפתור ביטול עריכה (מוסתר כברירת מחדל) */
+        #cancelEditBtn { background: #95a5a6; display: none; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; }
+        th, td { border: 1px solid #f0f0f0; padding: 15px; text-align: center; }
+        th { background: #3498db; color: white; font-weight: 600; }
+        tr:hover { background: #f9f9f9; }
+
+        .admin-only { display: none; }
+        .logout-btn { background: #34495e; width: 120px; }
+    </style>
+</head>
+<body>
+
+    <header class="admin-header">
+        <div class="header-right">
+            <img src="logo.jpg" class="admin-logo" onerror="this.src='https://via.placeholder.com/70?text=JP'">
+            <h2>שלום, <span id="uNameDisplay"></span></h2>
+        </div>
+        <button onclick="logout()" class="logout-btn">התנתק ➔</button>
+    </header>
+
+    <div class="box">
+        <h3>📦 ניהול מלאי חלפים</h3>
+        <div class="form-group">
+            <div class="input-group"><label>יצרן</label><input type="text" id="pMake" placeholder="KIA"></div>
+            <div class="input-group"><label>דגם</label><input type="text" id="pModel" placeholder="Sportage"></div>
+            <div class="input-group"><label>משנה</label><input type="number" id="pYearFrom" placeholder="2018"></div>
+            <div class="input-group"><label>עד שנה</label><input type="number" id="pYearTo" placeholder="2024"></div>
+            <div class="input-group"><label>שם החלק</label><input type="text" id="pName" placeholder="פילטר שמן"></div>
+            <div class="input-group"><label>קישור</label><input type="text" id="pLink" placeholder="http://..."></div>
+            
+            <button id="saveBtn" onclick="savePart()">הוסף חלק +</button>
+            <button id="cancelEditBtn" onclick="cancelEdit()">ביטול עריכה</button>
+        </div>
+        <table>
+            <thead><tr><th>יצרן</th><th>דגם</th><th>שנים</th><th>חלק</th><th>פעולה</th></tr></thead>
+            <tbody id="partsTable"></tbody>
+        </table>
+    </div>
+
+    <div id="adminPanel" class="admin-only">
+        <div class="box" style="border-right: 5px solid #27ae60;">
+            <h3>🔑 אישור בקשות שינוי סיסמה</h3>
+            <p style="font-size:14px; color:#555;">לחיצה על "אשר" תאפשר לעובד להגדיר סיסמה חדשה בדף הכניסה.</p>
+            <table>
+                <thead><tr><th>שם משתמש</th><th>סטטוס</th><th>פעולות</th></tr></thead>
+                <tbody id="resetTable"><tr><td colspan="3">טוען...</td></tr></tbody>
+            </table>
+        </div>
+
+        <div class="box">
+            <h3>👥 ניהול צוות משתמשים</h3>
+            <div class="form-group">
+                <div class="input-group"><label>שם משתמש</label><input type="text" id="newU"></div>
+                <div class="input-group"><label>סיסמה</label><input type="password" id="newP"></div>
+                <div class="input-group">
+                    <label>תפקיד</label>
+                    <select id="newR"><option value="worker">עובד</option><option value="admin">מנהל</option></select>
+                </div>
+                <button onclick="createUser()" style="background:#3498db">צור משתמש</button>
+            </div>
+            <table>
+                <thead><tr><th>שם משתמש</th><th>תפקיד</th><th>פעולה</th></tr></thead>
+                <tbody id="userTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (!user.username) window.location.href = "/login";
+        document.getElementById('uNameDisplay').innerText = user.username;
+
+        let editingId = null; // משתנה גלובלי לזיהוי עריכה
+
+        if (user.role === 'admin') {
+            document.querySelectorAll('.admin-only').forEach(e => e.style.display = 'block');
+            loadUsers();
+            loadResetRequests();
+        }
+
+        async function loadParts() {
+            const res = await fetch('/api/parts');
+            const data = await res.json();
+            window.allParts = data; // שמירת המידע בזיכרון לעריכה
+            
+            document.getElementById('partsTable').innerHTML = data.map(p => `
+                <tr>
+                    <td><strong>${p.make}</strong></td>
+                    <td>${p.model}</td>
+                    <td>${p.yearFrom}-${p.yearTo}</td>
+                    <td>${p.partName}</td>
+                    <td>
+                        <button class="edit-btn" onclick="startEdit(${p.id})">ערוך</button>
+                        <button class="del-btn" onclick="deletePart(${p.id})">מחק</button>
+                    </td>
+                </tr>`).join('');
+        }
+
+        // --- התחלת עריכה ---
+        function startEdit(id) {
+            const part = window.allParts.find(p => p.id === id);
+            if (!part) return;
+
+            document.getElementById('pMake').value = part.make;
+            document.getElementById('pModel').value = part.model;
+            document.getElementById('pYearFrom').value = part.yearFrom;
+            document.getElementById('pYearTo').value = part.yearTo;
+            document.getElementById('pName').value = part.partName;
+            document.getElementById('pLink').value = part.link;
+
+            editingId = id;
+            document.getElementById('saveBtn').innerText = "שמור שינויים 💾";
+            document.getElementById('saveBtn').style.background = "#f39c12"; // כתום
+            document.getElementById('cancelEditBtn').style.display = "inline-block";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- ביטול עריכה ---
+        function cancelEdit() {
+            editingId = null;
+            document.getElementById('pMake').value = '';
+            document.getElementById('pModel').value = '';
+            document.getElementById('pYearFrom').value = '';
+            document.getElementById('pYearTo').value = '';
+            document.getElementById('pName').value = '';
+            document.getElementById('pLink').value = '';
+            
+            document.getElementById('saveBtn').innerText = "הוסף חלק +";
+            document.getElementById('saveBtn').style.background = "#27ae60"; // ירוק
+            document.getElementById('cancelEditBtn').style.display = "none";
+        }
+
+        // --- פונקציית שמירה (מוסיפה או מעדכנת) ---
+        async function savePart() {
+            const data = {
+                make: document.getElementById('pMake').value, 
+                model: document.getElementById('pModel').value,
+                yearFrom: document.getElementById('pYearFrom').value, 
+                yearTo: document.getElementById('pYearTo').value,
+                partName: document.getElementById('pName').value, 
+                link: document.getElementById('pLink').value
+            };
+            
+            if(!data.make || !data.partName) return alert("מלא פרטים");
+
+            if (editingId) {
+                // עדכון (PUT)
+                await fetch(`/api/parts/${editingId}`, { 
+                    method: 'PUT', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify(data)
+                });
+                alert("הפריט עודכן בהצלחה");
+                cancelEdit();
+            } else {
+                // הוספה (POST)
+                await fetch('/api/parts/add', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify(data)
+                });
+                // ניקוי טופס ידני
+                cancelEdit(); 
+            }
+            loadParts();
+        }
+
+        async function deletePart(id) { 
+            if(confirm("למחוק?")) { 
+                await fetch(`/api/parts/${id}`, { method: 'DELETE' }); 
+                if (editingId === id) cancelEdit();
+                loadParts(); 
+            } 
+        }
+
+        async function loadUsers() {
+            const res = await fetch('/api/users');
+            const data = await res.json();
+            document.getElementById('userTable').innerHTML = data.map(u => `
+                <tr><td>${u.username}</td><td>${u.role==='admin'?'💎 מנהל':'🛠️ עובד'}</td>
+                <td>${u.username==='marten'?'-':`<button class="del-btn" onclick="deleteUser('${u.username}')">מחק</button>`}</td></tr>`).join('');
+        }
+
+        async function createUser() {
+            const username = document.getElementById('newU').value, password = document.getElementById('newP').value, role = document.getElementById('newR').value;
+            if(!username || !password) return alert("חסרים פרטים");
+            await fetch('/api/users/create', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({username, password, role})});
+            document.getElementById('newU').value = ''; document.getElementById('newP').value = '';
+            loadUsers();
+        }
+        
+        async function deleteUser(name) { if(confirm("למחוק?")) { await fetch(`/api/users/${name}`, { method: 'DELETE' }); loadUsers(); } }
+
+        async function loadResetRequests() {
+            const res = await fetch('/api/reset-requests');
+            const requests = await res.json();
+            const table = document.getElementById('resetTable');
+            if (requests.length === 0) return table.innerHTML = '<tr><td colspan="3">אין בקשות ממתינות</td></tr>';
+            table.innerHTML = requests.map(user => `
+                <tr><td><strong>${user}</strong></td><td style="color:#e67e22">ממתין לאישור</td>
+                <td><button class="approve-btn" onclick="handleReset('${user}', 'approve')">אשר שינוי</button>
+                <button class="reject-btn" onclick="handleReset('${user}', 'reject')">דחה</button></td></tr>`).join('');
+        }
+
+        async function handleReset(username, action) {
+            if (!confirm(action === 'approve' ? `לאשר ל-${username} לשנות סיסמה?` : `לדחות את הבקשה?`)) return;
+            await fetch('/api/reset-requests/handle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, action }) });
+            alert(action === 'approve' ? "האישור התקבל. העובד יכול כעת לשנות סיסמה." : "הבקשה נדחתה.");
+            loadResetRequests();
+        }
+
+        function logout() { localStorage.clear(); window.location.href = "/login"; }
+        loadParts();
+    </script>
+</body>
+</html>
