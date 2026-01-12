@@ -167,7 +167,6 @@
                 
                 if(data.success) {
                     carRes.style.display = 'block';
-                    // --- כאן הסידור החדש: 4 שורות נפרדות ---
                     carRes.innerHTML = `
                         <div class="info-item"><strong>יצרן:</strong> ${data.carData.make}</div>
                         <div class="info-item"><strong>דגם:</strong> ${data.carData.model}</div>
@@ -198,6 +197,13 @@
             statusDiv.style.color = "#e74c3c";
             statusDiv.style.display = 'block';
         }
+
+        // האזנה למקש Enter בשדה הקלט
+        document.getElementById('vinInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                handleSearch();
+            }
+        });
     </script>
 </body>
 </html>
